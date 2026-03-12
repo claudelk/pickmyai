@@ -16,17 +16,17 @@
   --color-warm-800: #3d352e;
   --color-warm-900: #1f1b17;
 
-  /* Accent: warm terracotta/amber */
-  --color-accent-50: #fef7f0;
-  --color-accent-100: #fdecd8;
-  --color-accent-200: #fad5ae;
-  --color-accent-300: #f5b67a;
-  --color-accent-400: #ef9344;
-  --color-accent-500: #ea7c23;
-  --color-accent-600: #d4631a;
-  --color-accent-700: #b04b16;
-  --color-accent-800: #8d3c19;
-  --color-accent-900: #733317;
+  /* Accent: warm blue */
+  --color-accent-50: #f0f5fe;
+  --color-accent-100: #dde8fc;
+  --color-accent-200: #c2d5fa;
+  --color-accent-300: #98b9f6;
+  --color-accent-400: #6895ef;
+  --color-accent-500: #4a76e8;
+  --color-accent-600: #3558dc;
+  --color-accent-700: #2d45ca;
+  --color-accent-800: #2a3aa4;
+  --color-accent-900: #273582;
 }
 
 /* Subtle warm radial glow behind main content */
