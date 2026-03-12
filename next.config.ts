@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Disable dev overlay indicator to reduce visual noise
+  devIndicators: false,
 };
 
 export default nextConfig;
