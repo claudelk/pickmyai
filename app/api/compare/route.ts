@@ -109,24 +109,33 @@ async function queryPlatform(platform: string, prompt: string): Promise<CompareR
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
-  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "127.0.0.1"
-  const { success, remaining } = await checkRateLimit(ip)
-
-  if (!success) {
-    return Response.json(
-      { error: "Rate limit exceeded. You have used all three free comparisons for today." },
-      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
-    )
-  }
-
-  // Parse and validate
-  let body: { prompt?: string; useCaseTag?: string }
+  // Parse body early so we can check tournamentRound before rate limiting
+  let bodyRaw: Record<string, unknown>
   try {
-    body = await request.json()
+    bodyRaw = await request.json()
   } catch {
     return Response.json({ error: "Invalid request body" }, { status: 400 })
   }
+
+  // Rate limiting — only count on round 1 (or non-tournament requests)
+  const tournamentRound = typeof bodyRaw.tournamentRound === "number" ? bodyRaw.tournamentRound : 1
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "127.0.0.1"
+  let remaining = 3
+
+  if (tournamentRound === 1) {
+    const rl = await checkRateLimit(ip)
+    remaining = rl.remaining
+
+    if (!rl.success) {
+      return Response.json(
+        { error: "Rate limit exceeded. You have used all three tournament runs for today." },
+        { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+      )
+    }
+  }
+
+  // Validate parsed body
+  const body = bodyRaw as { prompt?: string; useCaseTag?: string; platforms?: string[]; tournamentRound?: number }
 
   const prompt = body.prompt?.trim()
   if (!prompt) {
@@ -136,8 +145,9 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Prompt must be 500 characters or fewer" }, { status: 400 })
   }
 
-  // SSE stream: one event per platform as responses arrive
-  const platforms = ["chatgpt", "claude", "gemini", "mistral", "grok", "meta"]
+  // Accept optional platforms filter (for rounds 2-3 with 3 survivors)
+  const allPlatforms = ["chatgpt", "claude", "gemini", "mistral", "grok", "meta"]
+  const platforms = body.platforms?.filter((p) => allPlatforms.includes(p)) ?? allPlatforms
   const encoder = new TextEncoder()
 
   const stream = new ReadableStream({

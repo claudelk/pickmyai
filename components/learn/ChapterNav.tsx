@@ -7,6 +7,7 @@ const CHAPTERS = [
   { id: "chapter-2", label: "What can it do for you?" },
   { id: "chapter-3", label: "Benchmarks, decoded" },
   { id: "chapter-4", label: "Which AI is known for what?" },
+  { id: "chapter-5", label: "Making AI your own" },
 ]
 
 export function ChapterNav() {

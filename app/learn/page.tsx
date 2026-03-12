@@ -7,6 +7,7 @@ import { Chapter1 } from "@/components/learn/Chapter1"
 import { Chapter2 } from "@/components/learn/Chapter2"
 import { Chapter3 } from "@/components/learn/Chapter3"
 import { Chapter4 } from "@/components/learn/Chapter4"
+import { Chapter5 } from "@/components/learn/Chapter5"
 
 export default function LearnPage() {
   const [mode, setMode] = useState<"individual" | "business">("individual")
@@ -37,6 +38,7 @@ export default function LearnPage() {
             <Chapter2 mode={mode} />
             <Chapter3 mode={mode} />
             <Chapter4 mode={mode} />
+            <Chapter5 />
           </div>
         </div>
       </div>

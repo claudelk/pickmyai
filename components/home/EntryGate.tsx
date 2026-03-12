@@ -33,15 +33,15 @@ export function EntryGate({ onSelectPath }: EntryGateProps) {
             <div className="w-10 h-10 mx-auto rounded-full bg-accent-100 flex items-center justify-center">
               <span className="text-sm font-bold text-accent-600">2</span>
             </div>
-            <h3 className="text-sm font-medium text-warm-700">Compare</h3>
-            <p className="text-xs text-warm-400 leading-relaxed">See how six AIs respond to your prompt.</p>
+            <h3 className="text-sm font-medium text-warm-700">Three rounds</h3>
+            <p className="text-xs text-warm-400 leading-relaxed">Watch six AIs compete across editing, reasoning, and creativity.</p>
           </div>
           <div className="space-y-2">
             <div className="w-10 h-10 mx-auto rounded-full bg-accent-100 flex items-center justify-center">
               <span className="text-sm font-bold text-accent-600">3</span>
             </div>
-            <h3 className="text-sm font-medium text-warm-700">Decide</h3>
-            <p className="text-xs text-warm-400 leading-relaxed">Try the best one for free.</p>
+            <h3 className="text-sm font-medium text-warm-700">Your winner</h3>
+            <p className="text-xs text-warm-400 leading-relaxed">Get a personalized recommendation based on your votes.</p>
           </div>
         </div>
       </div>
