@@ -82,14 +82,39 @@ function HomeContent() {
         return
       }
 
-      const data = await response.json()
+      // Read SSE stream, updating cards as each platform responds
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
 
-      if (data.results) {
-        const newResults: Record<string, AICardResult> = {}
-        for (const result of data.results) {
-          newResults[result.platform] = result
+      if (reader) {
+        let buffer = ""
+        let receivedCount = 0
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split("\n\n")
+          buffer = lines.pop() ?? ""
+
+          for (const line of lines) {
+            const data = line.replace(/^data: /, "").trim()
+            if (!data || data === "[DONE]") continue
+
+            try {
+              const result: AICardResult = JSON.parse(data)
+              receivedCount++
+              setResults((prev) => ({ ...prev, [result.platform]: result }))
+            } catch {
+              // Skip malformed events
+            }
+          }
         }
-        setResults(newResults)
+
+        if (receivedCount === 0) {
+          throw new Error("No results received")
+        }
       }
     } catch {
       const errorResults: Record<string, AICardResult> = {}

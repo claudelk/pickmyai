@@ -37,6 +37,7 @@ const QUESTIONS = [
 export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<string[]>(["", "", ""])
+  const [isPersonalizing, setIsPersonalizing] = useState(false)
 
   const question = QUESTIONS[step]
 
@@ -51,8 +52,11 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
   }
 
   function handleFreeTextSubmit() {
-    const useCaseTag = mapQ2ToUseCaseTag(answers[1])
-    onComplete(useCaseTag, answers[2])
+    setIsPersonalizing(true)
+    setTimeout(() => {
+      const useCaseTag = mapQ2ToUseCaseTag(answers[1])
+      onComplete(useCaseTag, answers[2])
+    }, 1500)
   }
 
   function handleBack() {
@@ -61,6 +65,21 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
     } else {
       setStep(step - 1)
     }
+  }
+
+  if (isPersonalizing) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse [animation-delay:200ms]" />
+            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse [animation-delay:400ms]" />
+          </div>
+          <p className="text-sm text-slate-500">Personalizing your comparison...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

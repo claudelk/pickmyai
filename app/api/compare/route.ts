@@ -43,7 +43,6 @@ function isMockKey(key: string | undefined): boolean {
 async function queryPlatform(platform: string, prompt: string): Promise<CompareResult> {
   const start = Date.now()
 
-  // Check if we should use mock responses
   const keyMap: Record<string, string | undefined> = {
     chatgpt: process.env.OPENAI_API_KEY,
     claude: process.env.ANTHROPIC_API_KEY,
@@ -54,7 +53,6 @@ async function queryPlatform(platform: string, prompt: string): Promise<CompareR
   }
 
   if (isMockKey(keyMap[platform])) {
-    // Simulate varied latency for mock responses
     const mockLatency = 500 + Math.random() * 2000
     await new Promise((resolve) => setTimeout(resolve, mockLatency))
 
@@ -81,7 +79,6 @@ async function queryPlatform(platform: string, prompt: string): Promise<CompareR
     const fn = queryFn[platform]
     if (!fn) throw new Error(`Unknown platform: ${platform}`)
 
-    // 10 second timeout
     const result = await Promise.race([
       fn(prompt),
       new Promise<never>((_, reject) =>
@@ -139,27 +136,44 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Prompt must be 500 characters or fewer" }, { status: 400 })
   }
 
-  // Query all 6 platforms in parallel
+  // SSE stream: one event per platform as responses arrive
   const platforms = ["chatgpt", "claude", "gemini", "mistral", "grok", "meta"]
-  const results = await Promise.allSettled(
-    platforms.map((p) => queryPlatform(p, prompt))
-  )
+  const encoder = new TextEncoder()
 
-  const responses: CompareResult[] = results.map((result, i) => {
-    if (result.status === "fulfilled") return result.value
-    return {
-      platform: platforms[i],
-      status: "error" as const,
-      response: "",
-      latencyMs: 0,
-      model: MOCK_MODELS[platforms[i]] ?? "unknown",
-      tokensUsed: 0,
-      errorMessage: "Request failed",
-    }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const promises = platforms.map(async (platform) => {
+        let result: CompareResult
+        try {
+          result = await queryPlatform(platform, prompt)
+        } catch {
+          result = {
+            platform,
+            status: "error",
+            response: "",
+            latencyMs: 0,
+            model: MOCK_MODELS[platform] ?? "unknown",
+            tokensUsed: 0,
+            errorMessage: "Request failed",
+          }
+        }
+
+        const event = `data: ${JSON.stringify(result)}\n\n`
+        controller.enqueue(encoder.encode(event))
+      })
+
+      await Promise.allSettled(promises)
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"))
+      controller.close()
+    },
   })
 
-  return Response.json(
-    { results: responses, remaining },
-    { headers: { "X-RateLimit-Remaining": String(remaining) } }
-  )
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "X-RateLimit-Remaining": String(remaining),
+    },
+  })
 }

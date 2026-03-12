@@ -54,35 +54,25 @@ export function Chapter2({ mode }: Chapter2Props) {
         aspectRatio="aspect-[16/9]"
       />
 
-      {/* Use case cards with alternating layout */}
+      {/* Use case cards with alternating layout: one wide, then two side by side */}
       <div className="space-y-4">
-        {cases.map((useCase, i) => {
-          const isWide = i % 3 === 0 // first of every group of 3 is wide
-          return isWide ? (
-            <UseCaseCardComponent key={useCase.title} useCase={useCase} wide />
-          ) : null
-        })}
-        {/* Render pairs */}
         {(() => {
           const elements: React.ReactNode[] = []
-          for (let i = 0; i < cases.length; i++) {
-            if (i % 3 === 0) {
+          for (let i = 0; i < cases.length; i += 3) {
+            elements.push(
+              <UseCaseCardComponent key={cases[i].title} useCase={cases[i]} wide />
+            )
+            if (i + 1 < cases.length && i + 2 < cases.length) {
               elements.push(
-                <UseCaseCardComponent key={cases[i].title} useCase={cases[i]} wide />
+                <div key={`pair-${i}`} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <UseCaseCardComponent useCase={cases[i + 1]} />
+                  <UseCaseCardComponent useCase={cases[i + 2]} />
+                </div>
               )
-              // Next two in a row
-              if (i + 1 < cases.length && i + 2 < cases.length) {
-                elements.push(
-                  <div key={`pair-${i}`} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <UseCaseCardComponent useCase={cases[i + 1]} />
-                    <UseCaseCardComponent useCase={cases[i + 2]} />
-                  </div>
-                )
-              } else if (i + 1 < cases.length) {
-                elements.push(
-                  <UseCaseCardComponent key={cases[i + 1].title} useCase={cases[i + 1]} />
-                )
-              }
+            } else if (i + 1 < cases.length) {
+              elements.push(
+                <UseCaseCardComponent key={cases[i + 1].title} useCase={cases[i + 1]} />
+              )
             }
           }
           return elements

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { NudgeButton } from "./NudgeButton"
 import type { BenchmarkData } from "@/lib/constants"
@@ -8,17 +8,34 @@ import type { BenchmarkData } from "@/lib/constants"
 interface BenchmarkCardProps {
   benchmark: BenchmarkData
   mode: "individual" | "business"
-  defaultExpanded?: boolean
 }
 
-export function BenchmarkCard({ benchmark, mode, defaultExpanded = false }: BenchmarkCardProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded)
+function subscribeToDesktop(callback: () => void) {
+  const mql = window.matchMedia("(min-width: 1024px)")
+  mql.addEventListener("change", callback)
+  return () => mql.removeEventListener("change", callback)
+}
+
+function getIsDesktop() {
+  return window.matchMedia("(min-width: 1024px)").matches
+}
+
+function getIsDesktopServer() {
+  return false
+}
+
+export function BenchmarkCard({ benchmark, mode }: BenchmarkCardProps) {
+  const isDesktop = useSyncExternalStore(subscribeToDesktop, getIsDesktop, getIsDesktopServer)
+  const [manualToggle, setManualToggle] = useState<boolean | null>(null)
+
+  // If user has manually toggled, respect that. Otherwise use viewport default.
+  const expanded = manualToggle !== null ? manualToggle : isDesktop
   const content = mode === "individual" ? benchmark.individual : benchmark.business
 
   return (
     <div className="rounded-lg border border-slate-200 overflow-hidden" style={{ boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setManualToggle(!expanded)}
         className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-inset"
         aria-expanded={expanded}
       >

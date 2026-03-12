@@ -34,14 +34,11 @@ export function Chapter3({ mode }: Chapter3Props) {
       </div>
 
       <div className="space-y-4">
-        {BENCHMARKS.map((benchmark, i) => (
+        {BENCHMARKS.map((benchmark) => (
           <BenchmarkCard
             key={benchmark.id}
             benchmark={benchmark}
             mode={mode}
-            // Expanded by default on desktop (handled via CSS / media query isn't trivial here,
-            // so we default to expanded for first card only)
-            defaultExpanded={i === 0}
           />
         ))}
       </div>
