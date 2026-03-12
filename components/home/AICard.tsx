@@ -27,12 +27,11 @@ export function AICard({ platform, result, isRecommended, devMode }: AICardProps
 
   return (
     <div
-      className={`relative rounded-lg border p-5 transition-colors duration-200 ${
+      className={`relative rounded-xl border p-5 transition-all duration-200 ${
         isError
           ? "border-red-200 bg-red-50/50"
-          : "border-slate-200 bg-white"
+          : "border-warm-200 bg-white hover:border-warm-300 hover:shadow-md hover:shadow-warm-100/50"
       }`}
-      style={{ boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}
     >
       {isRecommended && !isLoading && !isError && <RecommendationBadge />}
 
@@ -42,37 +41,37 @@ export function AICard({ platform, result, isRecommended, devMode }: AICardProps
           className="w-3 h-3 rounded-full flex-shrink-0"
           style={{ backgroundColor: platform.color }}
         />
-        <h3 className="font-semibold text-sm text-slate-900">{platform.displayName}</h3>
-        <span className="text-xs text-slate-400">{platform.company}</span>
+        <h3 className="font-semibold text-sm text-warm-800">{platform.displayName}</h3>
+        <span className="text-xs text-warm-400">{platform.company}</span>
       </div>
 
-      <p className="text-xs text-slate-500 italic mb-3">{platform.tagline}</p>
+      <p className="text-xs text-warm-400 italic mb-3">{platform.tagline}</p>
 
       {/* Response area */}
       <div className="min-h-[120px] max-h-[300px] overflow-y-auto mb-3">
         {isLoading ? (
           <div className="space-y-2">
-            <div className="h-3 bg-slate-100 rounded animate-pulse w-full" />
-            <div className="h-3 bg-slate-100 rounded animate-pulse w-5/6" />
-            <div className="h-3 bg-slate-100 rounded animate-pulse w-4/6" />
-            <div className="h-3 bg-slate-100 rounded animate-pulse w-full" />
-            <div className="h-3 bg-slate-100 rounded animate-pulse w-3/6" />
+            <div className="h-3 bg-warm-100 rounded animate-pulse w-full" />
+            <div className="h-3 bg-warm-100 rounded animate-pulse w-5/6" />
+            <div className="h-3 bg-warm-100 rounded animate-pulse w-4/6" />
+            <div className="h-3 bg-warm-100 rounded animate-pulse w-full" />
+            <div className="h-3 bg-warm-100 rounded animate-pulse w-3/6" />
           </div>
         ) : isError ? (
           <p className="text-sm text-red-400">
             Could not reach {platform.displayName} right now.
           </p>
         ) : (
-          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-warm-600 leading-relaxed whitespace-pre-wrap">
             {result.response}
           </p>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+      <div className="flex items-center justify-between pt-3 border-t border-warm-100">
         {result && !isLoading && !isError && (
-          <span className="text-xs text-slate-400 tabular-nums">
+          <span className="text-xs text-warm-400 tabular-nums">
             {(result.latencyMs / 1000).toFixed(1)}s
           </span>
         )}
@@ -80,7 +79,7 @@ export function AICard({ platform, result, isRecommended, devMode }: AICardProps
           href={platform.signupUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:text-[#1E40AF] transition-colors duration-200"
+          className="inline-flex items-center gap-1 text-xs font-medium text-accent-500 hover:text-accent-700 transition-colors duration-200"
         >
           Try it free
           <ExternalLink size={12} />
@@ -89,21 +88,21 @@ export function AICard({ platform, result, isRecommended, devMode }: AICardProps
 
       {/* Developer mode extras */}
       {devMode && result && !isLoading && (
-        <div className="mt-3 pt-3 border-t border-slate-100 space-y-1">
-          <p className="text-xs text-slate-400">
+        <div className="mt-3 pt-3 border-t border-warm-100 space-y-1">
+          <p className="text-xs text-warm-400">
             <span className="font-medium">Model:</span> {result.model}
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-warm-400">
             <span className="font-medium">Tokens:</span> {result.tokensUsed}
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-warm-400">
             <span className="font-medium">Latency:</span> {result.latencyMs}ms
           </p>
           <a
             href={platform.pricingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-[#2563EB] hover:underline"
+            className="text-xs text-accent-500 hover:underline"
           >
             View pricing
           </a>

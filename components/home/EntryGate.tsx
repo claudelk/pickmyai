@@ -1,60 +1,112 @@
 "use client"
 
+import { Lightbulb, Compass, ArrowRight } from "lucide-react"
+
 interface EntryGateProps {
   onSelectPath: (path: "a" | "b") => void
 }
 
 export function EntryGate({ onSelectPath }: EntryGateProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6">
-      <div className="max-w-xl w-full text-center space-y-6">
-        <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 leading-tight">
+    <div className="flex flex-col items-center min-h-[calc(100vh-64px)] px-6 py-12 sm:py-16">
+      {/* Headline */}
+      <div className="max-w-2xl w-full text-center space-y-4 mb-12">
+        <h1 className="font-serif text-4xl sm:text-5xl font-bold text-warm-800 leading-tight">
           Not sure which AI to use?
         </h1>
-        <p className="text-lg text-slate-500">
+        <p className="text-lg text-warm-500">
           Try them all at once. No account needed.
         </p>
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <button
-            onClick={() => onSelectPath("a")}
-            className="px-8 py-4 text-base font-medium rounded-lg border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 focus:ring-2 focus:ring-blue-500"
-          >
-            I know AI
-          </button>
-          <button
-            onClick={() => onSelectPath("b")}
-            className="px-8 py-4 text-base font-medium rounded-lg border border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 focus:ring-2 focus:ring-blue-500"
-          >
-            I am new to AI
-          </button>
+      {/* How it works — above tiles */}
+      <div className="max-w-2xl w-full mb-14">
+        <div className="grid grid-cols-3 gap-6 text-center">
+          <div className="space-y-2">
+            <div className="w-10 h-10 mx-auto rounded-full bg-accent-100 flex items-center justify-center">
+              <span className="text-sm font-bold text-accent-600">1</span>
+            </div>
+            <h3 className="text-sm font-medium text-warm-700">Choose</h3>
+            <p className="text-xs text-warm-400 leading-relaxed">Tell us what you need help with.</p>
+          </div>
+          <div className="space-y-2">
+            <div className="w-10 h-10 mx-auto rounded-full bg-accent-100 flex items-center justify-center">
+              <span className="text-sm font-bold text-accent-600">2</span>
+            </div>
+            <h3 className="text-sm font-medium text-warm-700">Compare</h3>
+            <p className="text-xs text-warm-400 leading-relaxed">See how six AIs respond to your prompt.</p>
+          </div>
+          <div className="space-y-2">
+            <div className="w-10 h-10 mx-auto rounded-full bg-accent-100 flex items-center justify-center">
+              <span className="text-sm font-bold text-accent-600">3</span>
+            </div>
+            <h3 className="text-sm font-medium text-warm-700">Decide</h3>
+            <p className="text-xs text-warm-400 leading-relaxed">Try the best one for free.</p>
+          </div>
         </div>
       </div>
 
-      <div className="mt-24">
-        <a href="#how-it-works" className="text-sm text-slate-400 hover:text-slate-600 transition-colors duration-200">
-          How it works
-        </a>
-      </div>
+      {/* Large illustrated tiles */}
+      <div className="max-w-3xl w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Tile A: I know AI */}
+        <button
+          onClick={() => onSelectPath("a")}
+          className="group relative overflow-hidden rounded-2xl border border-warm-200 bg-white p-8 sm:p-10 text-left transition-all duration-300 hover:border-accent-300 hover:shadow-lg hover:shadow-accent-100/50 hover:-translate-y-1 focus:ring-2 focus:ring-accent-400 focus:outline-none"
+        >
+          {/* Decorative warm gradient blob */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br from-accent-100 to-accent-200/50 transition-transform duration-500 group-hover:scale-125" />
 
-      <div id="how-it-works" className="max-w-3xl w-full pt-24 pb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-          <div className="space-y-2">
-            <div className="text-2xl font-bold text-[#2563EB]">1</div>
-            <h3 className="font-medium text-slate-900">Choose</h3>
-            <p className="text-sm text-slate-500">Tell us what you need help with, or pick a path.</p>
+          <div className="relative space-y-5">
+            {/* Illustration area */}
+            <div className="w-16 h-16 rounded-2xl bg-accent-50 border border-accent-100 flex items-center justify-center transition-colors duration-300 group-hover:bg-accent-100">
+              <Lightbulb size={28} className="text-accent-500 transition-colors duration-300 group-hover:text-accent-600" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-warm-800 transition-colors duration-300 group-hover:text-accent-700">
+                I know AI
+              </h2>
+              <p className="text-sm text-warm-400 leading-relaxed">
+                Jump straight to comparing all six platforms with your own prompt.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-sm font-medium text-accent-500 transition-all duration-300 group-hover:text-accent-600 group-hover:gap-3">
+              Get started
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <div className="text-2xl font-bold text-[#2563EB]">2</div>
-            <h3 className="font-medium text-slate-900">Compare</h3>
-            <p className="text-sm text-slate-500">See how six different AIs respond to your exact prompt.</p>
+        </button>
+
+        {/* Tile B: I am new to AI */}
+        <button
+          onClick={() => onSelectPath("b")}
+          className="group relative overflow-hidden rounded-2xl border border-warm-200 bg-white p-8 sm:p-10 text-left transition-all duration-300 hover:border-accent-300 hover:shadow-lg hover:shadow-accent-100/50 hover:-translate-y-1 focus:ring-2 focus:ring-accent-400 focus:outline-none"
+        >
+          {/* Decorative warm gradient blob */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br from-warm-100 to-accent-100/50 transition-transform duration-500 group-hover:scale-125" />
+
+          <div className="relative space-y-5">
+            {/* Illustration area */}
+            <div className="w-16 h-16 rounded-2xl bg-warm-100 border border-warm-200 flex items-center justify-center transition-colors duration-300 group-hover:bg-accent-50">
+              <Compass size={28} className="text-warm-500 transition-colors duration-300 group-hover:text-accent-500" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-warm-800 transition-colors duration-300 group-hover:text-accent-700">
+                I am new to AI
+              </h2>
+              <p className="text-sm text-warm-400 leading-relaxed">
+                Answer three quick questions and we will suggest the best AI for you.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-sm font-medium text-accent-500 transition-all duration-300 group-hover:text-accent-600 group-hover:gap-3">
+              Guide me
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <div className="text-2xl font-bold text-[#2563EB]">3</div>
-            <h3 className="font-medium text-slate-900">Decide</h3>
-            <p className="text-sm text-slate-500">Get a recommendation and try the best one for free.</p>
-          </div>
-        </div>
+        </button>
       </div>
     </div>
   )

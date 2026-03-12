@@ -42,7 +42,7 @@ export function PromptInput({ onSubmit, initialPrompt = "", isLoading = false }:
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-warm-600">
         Type anything. A question, a task, a creative challenge.
       </label>
 
@@ -57,11 +57,11 @@ export function PromptInput({ onSubmit, initialPrompt = "", isLoading = false }:
               handleSubmit()
             }
           }}
-          className="w-full h-32 px-4 py-3 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full h-32 px-4 py-3 rounded-xl border border-warm-200 text-sm text-warm-800 placeholder:text-warm-300 resize-none focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent bg-white"
           maxLength={500}
         />
         {prompt.length >= 400 && (
-          <span className="absolute bottom-3 right-3 text-xs text-slate-400">
+          <span className="absolute bottom-3 right-3 text-xs text-warm-400">
             {prompt.length}/500
           </span>
         )}
@@ -70,7 +70,7 @@ export function PromptInput({ onSubmit, initialPrompt = "", isLoading = false }:
       <button
         onClick={handleSubmit}
         disabled={prompt.trim().length === 0 || isLoading}
-        className="w-full py-3 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1E40AF] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+        className="w-full py-3 bg-accent-500 text-white text-sm font-medium rounded-xl hover:bg-accent-600 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-accent-400"
       >
         {isLoading ? "Comparing..." : "Compare all 6 AIs"}
       </button>
@@ -81,7 +81,7 @@ export function PromptInput({ onSubmit, initialPrompt = "", isLoading = false }:
           <button
             key={tag}
             onClick={() => handleChipClick(tag)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-warm-200 text-warm-500 hover:border-accent-300 hover:bg-accent-50 hover:text-accent-600 transition-colors duration-200 focus:ring-2 focus:ring-accent-400"
           >
             {chipLabels[tag]}
           </button>

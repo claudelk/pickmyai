@@ -14,10 +14,10 @@ export function Chapter1() {
           label="A human figure inside a vast circular library"
           aspectRatio="aspect-[4/3]"
         />
-        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-warm-800 leading-tight">
           You have heard the word a thousand times.
         </h2>
-        <p className="text-lg text-slate-500">Here is what it actually means.</p>
+        <p className="text-lg text-warm-500">Here is what it actually means.</p>
       </div>
 
       {/* Illustrated sequence */}
@@ -28,7 +28,7 @@ export function Chapter1() {
             label="A vast library of all human knowledge"
             aspectRatio="aspect-square"
           />
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-warm-600">
             Start with a library. Every book, article, and conversation ever written.
           </p>
         </div>
@@ -38,7 +38,7 @@ export function Chapter1() {
             label="A brain made of interconnected dots and lines"
             aspectRatio="aspect-square"
           />
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-warm-600">
             Add a brain that reads all of it and learns to recognize patterns.
           </p>
         </div>
@@ -48,7 +48,7 @@ export function Chapter1() {
             label="A person having a conversation with a glowing orb"
             aspectRatio="aspect-square"
           />
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-warm-600">
             Now it can finish your sentences, answer your questions, and help you think.
           </p>
         </div>
@@ -58,7 +58,7 @@ export function Chapter1() {
       <AutocompleteDemo />
 
       {/* Closing */}
-      <p className="text-base text-slate-700 leading-relaxed">
+      <p className="text-base text-warm-700 leading-relaxed">
         That is what all of these AI assistants are doing every time you talk to them.
       </p>
 
@@ -91,33 +91,33 @@ function AutocompleteDemo() {
   }, [typed])
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
-      <p className="text-sm font-medium text-slate-700">See it in action</p>
+    <div className="bg-white rounded-xl border border-warm-200 p-6 space-y-4">
+      <p className="text-sm font-medium text-warm-700">See it in action</p>
 
       <div className="space-y-3">
         {/* Input display */}
-        <div className="px-4 py-3 bg-slate-50 rounded-lg text-sm text-slate-900 font-mono">
+        <div className="px-4 py-3 bg-warm-50 rounded-lg text-sm text-warm-800 font-mono">
           {typed}
           <span className="animate-pulse">|</span>
         </div>
 
         {/* Basic completion */}
         {typed.length >= fullText.length && (
-          <div className="px-4 py-2 bg-slate-100 rounded-lg text-sm text-slate-500">
+          <div className="px-4 py-2 bg-warm-100 rounded-lg text-sm text-warm-500">
             Basic autocomplete: <span className="italic">{basicCompletion}</span>
           </div>
         )}
 
         {/* Advanced AI completion */}
         {showAdvanced && (
-          <div className="px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-slate-700 transition-opacity duration-500">
+          <div className="px-4 py-3 bg-accent-50 border border-accent-100 rounded-lg text-sm text-warm-700 transition-opacity duration-500">
             AI response: <span className="italic">{advancedCompletion}</span>
           </div>
         )}
       </div>
 
       {showAdvanced && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-warm-500">
           That jump, from guessing the next word to understanding your intent, is what makes Claude, ChatGPT, and Gemini different.
         </p>
       )}

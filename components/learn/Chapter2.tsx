@@ -40,10 +40,10 @@ export function Chapter2({ mode }: Chapter2Props) {
   return (
     <section id="chapter-2" className="space-y-10">
       <div className="space-y-4">
-        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+        <h2 className="font-serif text-3xl sm:text-4xl font-bold text-warm-800 leading-tight">
           What can it do for you?
         </h2>
-        <p className="text-lg text-slate-500">
+        <p className="text-lg text-warm-500">
           Real tasks, real examples. Not hypotheticals.
         </p>
       </div>
@@ -91,16 +91,16 @@ export function Chapter2({ mode }: Chapter2Props) {
   )
 }
 
-function UseCaseCardComponent({ useCase, wide }: { useCase: UseCaseCard; wide?: boolean }) {
+function UseCaseCardComponent({ useCase }: { useCase: UseCaseCard; wide?: boolean }) {
   const Icon = useCase.icon
   return (
-    <div className={`rounded-lg border border-slate-200 p-5 space-y-2 ${wide ? "" : ""}`} style={{ boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" }}>
+    <div className="rounded-xl border border-warm-200 bg-white p-5 space-y-2 hover:border-warm-300 transition-colors duration-200">
       <div className="flex items-center gap-2">
-        <Icon size={18} className="text-[#7C3AED] flex-shrink-0" />
-        <h3 className="font-semibold text-sm text-slate-900">{useCase.title}</h3>
+        <Icon size={18} className="text-accent-500 flex-shrink-0" />
+        <h3 className="font-semibold text-sm text-warm-800">{useCase.title}</h3>
       </div>
-      <p className="text-sm text-slate-600">{useCase.description}</p>
-      <p className="text-sm text-slate-400 italic">{useCase.example}</p>
+      <p className="text-sm text-warm-600">{useCase.description}</p>
+      <p className="text-sm text-warm-400 italic">{useCase.example}</p>
     </div>
   )
 }

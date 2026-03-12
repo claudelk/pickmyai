@@ -12,14 +12,14 @@ export default function LearnPage() {
   const [mode, setMode] = useState<"individual" | "business">("individual")
 
   return (
-    <div className="min-h-screen bg-[#FDFAF5]">
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Hero */}
         <div className="text-center space-y-4 mb-12">
-          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-slate-900 leading-tight">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-warm-800 leading-tight">
             AI 101
           </h1>
-          <p className="text-lg text-slate-500 max-w-xl mx-auto">
+          <p className="text-lg text-warm-500 max-w-xl mx-auto">
             Plain-English guides to what AI is, what it can do for you, and how to read benchmarks without a computer science degree.
           </p>
 

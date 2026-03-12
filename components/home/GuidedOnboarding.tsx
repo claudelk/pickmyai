@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, MessageCircle, Briefcase, PenTool } from "lucide-react"
 import type { UseCaseTag } from "@/lib/constants"
 import { mapQ2ToUseCaseTag } from "@/lib/recommend"
 
@@ -15,6 +15,8 @@ const QUESTIONS = [
     text: "Have you ever chatted with an AI before, like ChatGPT, Siri, or a chatbot on a website?",
     type: "single" as const,
     options: ["Yes, a few times", "Once or twice", "Never tried one"],
+    icon: MessageCircle,
+    color: "accent",
   },
   {
     text: "What do you spend the most time on during your day?",
@@ -26,11 +28,15 @@ const QUESTIONS = [
       "Coding or technical tasks",
       "Managing a business or team",
     ],
+    icon: Briefcase,
+    color: "warm",
   },
   {
     text: "What is one thing that takes way longer than it should in your daily life or work?",
     type: "freetext" as const,
     options: [],
+    icon: PenTool,
+    color: "accent",
   },
 ]
 
@@ -40,6 +46,7 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
   const [isPersonalizing, setIsPersonalizing] = useState(false)
 
   const question = QUESTIONS[step]
+  const IconComponent = question.icon
 
   function handleSelect(option: string) {
     const newAnswers = [...answers]
@@ -71,12 +78,12 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6">
         <div className="text-center space-y-4">
-          <div className="flex justify-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse [animation-delay:200ms]" />
-            <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse [animation-delay:400ms]" />
+          <div className="flex justify-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-accent-400 animate-pulse" />
+            <div className="w-2.5 h-2.5 rounded-full bg-accent-400 animate-pulse [animation-delay:200ms]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-accent-400 animate-pulse [animation-delay:400ms]" />
           </div>
-          <p className="text-sm text-slate-500">Personalizing your comparison...</p>
+          <p className="text-sm text-warm-500">Personalizing your comparison...</p>
         </div>
       </div>
     )
@@ -89,30 +96,35 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200 focus:ring-2 focus:ring-blue-500"
+            className="p-2 rounded-lg hover:bg-warm-100 transition-colors duration-200 focus:ring-2 focus:ring-accent-400"
             aria-label="Go back"
           >
-            <ArrowLeft size={20} className="text-slate-500" />
+            <ArrowLeft size={20} className="text-warm-400" />
           </button>
           <div className="flex-1">
             <div className="flex gap-2">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className={`h-1.5 flex-1 rounded-full transition-colors duration-200 ${
-                    i <= step ? "bg-[#2563EB]" : "bg-slate-200"
+                  className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                    i <= step ? "bg-accent-400" : "bg-warm-200"
                   }`}
                 />
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-2">Step {step + 1} of 3</p>
+            <p className="text-xs text-warm-400 mt-2">Step {step + 1} of 3</p>
           </div>
         </div>
 
-        {/* Question */}
-        <h2 className="text-xl font-semibold text-slate-900 leading-relaxed">
-          {question.text}
-        </h2>
+        {/* Question illustration */}
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-accent-50 border border-accent-100 flex items-center justify-center flex-shrink-0">
+            <IconComponent size={22} className="text-accent-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-warm-800 leading-relaxed">
+            {question.text}
+          </h2>
+        </div>
 
         {/* Options or free text */}
         {question.type === "single" ? (
@@ -121,10 +133,10 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
               <button
                 key={option}
                 onClick={() => handleSelect(option)}
-                className={`w-full text-left px-5 py-4 rounded-lg border text-sm font-medium transition-colors duration-200 focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full text-left px-5 py-4 rounded-xl border text-sm font-medium transition-all duration-200 focus:ring-2 focus:ring-accent-400 ${
                   answers[step] === option
-                    ? "border-[#2563EB] bg-blue-50 text-[#2563EB]"
-                    : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    ? "border-accent-400 bg-accent-50 text-accent-700"
+                    : "border-warm-200 text-warm-600 hover:border-warm-300 hover:bg-warm-50"
                 }`}
               >
                 {option}
@@ -141,17 +153,17 @@ export function GuidedOnboarding({ onComplete, onBack }: GuidedOnboardingProps) 
                 setAnswers(newAnswers)
               }}
               placeholder="e.g. writing meeting summaries, replying to emails, researching topics..."
-              className="w-full h-28 px-4 py-3 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-28 px-4 py-3 rounded-xl border border-warm-200 text-sm text-warm-800 placeholder:text-warm-300 resize-none focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent bg-white"
               maxLength={200}
             />
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-warm-400">
                 {answers[2].length}/200
               </span>
               <button
                 onClick={handleFreeTextSubmit}
                 disabled={answers[2].length === 0}
-                className="px-6 py-2.5 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1E40AF] transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500"
+                className="px-6 py-2.5 bg-accent-500 text-white text-sm font-medium rounded-xl hover:bg-accent-600 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-accent-400"
               >
                 See my comparison
               </button>

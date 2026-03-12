@@ -3,4 +3,34 @@
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-lora), ui-serif, Georgia, serif;
+
+  /* Warm palette */
+  --color-warm-50: #faf7f2;
+  --color-warm-100: #f5efe6;
+  --color-warm-200: #e8dfd2;
+  --color-warm-300: #d4c8b8;
+  --color-warm-400: #b8a898;
+  --color-warm-500: #9c8b78;
+  --color-warm-600: #7a6b5a;
+  --color-warm-700: #5c5044;
+  --color-warm-800: #3d352e;
+  --color-warm-900: #1f1b17;
+
+  /* Accent: warm terracotta/amber */
+  --color-accent-50: #fef7f0;
+  --color-accent-100: #fdecd8;
+  --color-accent-200: #fad5ae;
+  --color-accent-300: #f5b67a;
+  --color-accent-400: #ef9344;
+  --color-accent-500: #ea7c23;
+  --color-accent-600: #d4631a;
+  --color-accent-700: #b04b16;
+  --color-accent-800: #8d3c19;
+  --color-accent-900: #733317;
+}
+
+/* Subtle warm radial glow behind main content */
+body {
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, var(--color-warm-100) 0%, var(--color-warm-50) 50%, #ffffff 100%);
+  background-attachment: fixed;
 }

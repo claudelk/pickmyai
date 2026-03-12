@@ -13,8 +13,8 @@ export function DeveloperModeToggle({ enabled, onToggle }: DeveloperModeTogglePr
       onClick={onToggle}
       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 border ${
         enabled
-          ? "bg-slate-900 text-white border-slate-900"
-          : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+          ? "bg-warm-800 text-white border-warm-800"
+          : "bg-white text-warm-500 border-warm-200 hover:border-warm-300 hover:text-warm-600"
       }`}
       aria-pressed={enabled}
     >

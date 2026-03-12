@@ -15,7 +15,7 @@ export function NudgeButton({ text, href = "/", promptPreFill = "" }: NudgeButto
   return (
     <Link
       href={url}
-      className="inline-flex items-center gap-2 px-6 py-3 bg-[#2563EB] text-white text-sm font-medium rounded-lg hover:bg-[#1E40AF] transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="inline-flex items-center gap-2 px-6 py-3 bg-accent-500 text-white text-sm font-medium rounded-xl hover:bg-accent-600 transition-colors duration-200 focus:ring-2 focus:ring-accent-400 focus:ring-offset-2"
     >
       {text}
       <ArrowRight size={16} />
