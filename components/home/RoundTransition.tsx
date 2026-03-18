@@ -1,18 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getRoundConfig } from "@/lib/tournament"
-import type { RoundNumber } from "@/lib/tournament"
+import type { CategoryConfig } from "@/lib/categories"
 
 interface RoundTransitionProps {
-  completedRound: RoundNumber
+  completedCategory: CategoryConfig
+  nextCategory: CategoryConfig
+  completedCategoryIndex: number
+  totalCategories: number
   onComplete: () => void
 }
 
-export function RoundTransition({ completedRound, onComplete }: RoundTransitionProps) {
+export function RoundTransition({
+  completedCategory,
+  nextCategory,
+  completedCategoryIndex,
+  totalCategories,
+  onComplete,
+}: RoundTransitionProps) {
   const [visible, setVisible] = useState(true)
-  const nextRound = (completedRound + 1) as RoundNumber
-  const nextConfig = getRoundConfig(nextRound)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,20 +36,20 @@ export function RoundTransition({ completedRound, onComplete }: RoundTransitionP
     >
       <div className="text-center space-y-4">
         <div className="w-12 h-12 mx-auto rounded-full bg-accent-100 flex items-center justify-center mb-2">
-          <span className="text-lg font-bold text-accent-600">✓</span>
+          <span className="text-lg font-bold text-accent-600">&#10003;</span>
         </div>
         <h2 className="font-serif text-2xl font-bold text-warm-800">
-          Round {completedRound} complete
+          {completedCategory.name} complete
         </h2>
         <p className="text-warm-500">
-          Moving to <span className="font-medium text-warm-700">{nextConfig.category}</span>...
+          Moving to <span className="font-medium text-warm-700">{nextCategory.name}</span>...
         </p>
         <div className="flex gap-2 justify-center mt-4">
-          {[1, 2, 3].map((r) => (
+          {Array.from({ length: totalCategories }).map((_, i) => (
             <div
-              key={r}
+              key={i}
               className={`w-3 h-3 rounded-full ${
-                r <= completedRound ? "bg-accent-500" : "bg-warm-200"
+                i <= completedCategoryIndex ? "bg-accent-500" : "bg-warm-200"
               }`}
             />
           ))}

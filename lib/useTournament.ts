@@ -2,52 +2,69 @@
 
 import { useState, useCallback, useRef } from "react"
 import type { AICardResult } from "@/components/home/AICard"
-import type { UseCaseTag } from "@/lib/constants"
+import type { CategoryConfig } from "./categories"
 import {
   ALL_PLATFORM_IDS,
-  getRoundConfig,
   checkForWinner,
   resolveTiebreaker,
+  isEliminationSubRound,
+  getPlatformsForRound,
+  isLastVote,
+  categoryToRoundConfig,
 } from "./tournament"
-import type { TournamentStage, RoundNumber, VoteState } from "./tournament"
+import type { TournamentPhase, TournamentMode, VoteState } from "./tournament"
 
 export interface TournamentState {
-  stage: TournamentStage
-  currentRound: RoundNumber
+  phase: TournamentPhase
+  mode: TournamentMode
+  selectedCategories: CategoryConfig[]
+
+  // Tracking position
+  currentCategoryIndex: number
+  currentSubRound: number // 0, 1, or 2 within a category (deep mode only; always 0 in fast)
+
+  // Votes
   voteState: VoteState
+
   results: Record<string, AICardResult>
+  /** Cached results per category (for deep mode reuse) */
+  categoryResults: Record<string, Record<string, AICardResult>>
   isLoading: boolean
   rateLimited: boolean
-  useCaseTag: UseCaseTag | undefined
   suggestedPrompt: string
-  /** The winning platform id */
   winner: string | null
-  /** Tiebreaker answers collected so far */
   tiebreakerAnswers: Record<string, "a" | "b">
-  /** The prompts the user actually used per round */
-  roundPrompts: Record<number, string>
+  roundPrompts: Record<string, string> // categoryId → prompt used
+}
+
+const INITIAL_STATE: TournamentState = {
+  phase: "gate",
+  mode: "fast",
+  selectedCategories: [],
+  currentCategoryIndex: 0,
+  currentSubRound: 0,
+  voteState: {
+    votes: {},
+    survivors: [...ALL_PLATFORM_IDS],
+    categoryPicks: {},
+    categoryWinners: {},
+  },
+  results: {},
+  categoryResults: {},
+  isLoading: false,
+  rateLimited: false,
+  suggestedPrompt: "",
+  winner: null,
+  tiebreakerAnswers: {},
+  roundPrompts: {},
 }
 
 export function useTournament(initialPrompt = "") {
   const stateRef = useRef<TournamentState>(null!)
   const [state, setState] = useState<TournamentState>({
-    stage: initialPrompt ? "round1_prompt" : "gate",
-    currentRound: 1,
-    voteState: {
-      votes: {},
-      survivors: [...ALL_PLATFORM_IDS],
-      round1Picks: [],
-      round2Pick: null,
-      round3Pick: null,
-    },
-    results: {},
-    isLoading: false,
-    rateLimited: false,
-    useCaseTag: undefined,
+    ...INITIAL_STATE,
+    phase: initialPrompt ? "category_select" : "gate",
     suggestedPrompt: initialPrompt,
-    winner: null,
-    tiebreakerAnswers: {},
-    roundPrompts: {},
   })
   stateRef.current = state
 
@@ -56,28 +73,52 @@ export function useTournament(initialPrompt = "") {
   const handlePathSelect = useCallback((path: "a" | "b") => {
     setState((prev) => ({
       ...prev,
-      stage: path === "a" ? "round1_prompt" : "onboarding",
+      mode: path === "a" ? "fast" : "deep",
+      phase: "category_select",
     }))
   }, [])
 
-  const handleOnboardingComplete = useCallback((tag: UseCaseTag, freeText: string) => {
+  // ─── Category Selection ────────────────────────────────────────
+
+  const handleCategorySelect = useCallback((categories: CategoryConfig[]) => {
     setState((prev) => ({
       ...prev,
-      useCaseTag: tag,
-      suggestedPrompt: freeText || "",
-      stage: "round1_prompt",
+      selectedCategories: categories,
+      currentCategoryIndex: 0,
+      currentSubRound: 0,
+      phase: "round_prompt",
     }))
   }, [])
 
   // ─── Prompt Submission & API ─────────────────────────────────────
 
   const handleCompare = useCallback(async (prompt: string) => {
-    // Read current state synchronously via ref before any async work
     const current = stateRef.current
-    const round = current.currentRound
-    const platforms = round === 1 ? ALL_PLATFORM_IDS : current.voteState.survivors
+    const { mode, currentCategoryIndex, currentSubRound, selectedCategories } = current
+    const catId = selectedCategories[currentCategoryIndex]?.id ?? ""
 
-    // Set loading results
+    // In deep mode sub-rounds 1-2, reuse cached results (no new API call)
+    if (mode === "deep" && currentSubRound > 0 && current.categoryResults[catId]) {
+      const cachedResults = current.categoryResults[catId]
+      // Filter to only show survivors
+      const survivorResults: Record<string, AICardResult> = {}
+      for (const s of current.voteState.survivors) {
+        if (cachedResults[s]) survivorResults[s] = cachedResults[s]
+      }
+      setState((prev) => ({
+        ...prev,
+        results: survivorResults,
+        isLoading: false,
+        phase: "round_vote",
+        roundPrompts: { ...prev.roundPrompts, [catId]: prompt },
+      }))
+      return
+    }
+
+    const isElimination = isEliminationSubRound(mode, currentCategoryIndex, currentSubRound)
+    const platforms = isElimination ? ALL_PLATFORM_IDS : current.voteState.survivors
+
+    // Set loading
     const loadingResults: Record<string, AICardResult> = {}
     for (const p of platforms) {
       loadingResults[p] = {
@@ -90,20 +131,13 @@ export function useTournament(initialPrompt = "") {
       }
     }
 
-    const resultsStage: TournamentStage =
-      round === 1
-        ? "round1_results"
-        : round === 2
-          ? "round2_results"
-          : "round3_results"
-
     setState((prev) => ({
       ...prev,
       isLoading: true,
       rateLimited: false,
       results: loadingResults,
-      stage: resultsStage,
-      roundPrompts: { ...prev.roundPrompts, [round]: prompt },
+      phase: "round_results",
+      roundPrompts: { ...prev.roundPrompts, [catId]: prompt },
     }))
 
     try {
@@ -113,7 +147,7 @@ export function useTournament(initialPrompt = "") {
         body: JSON.stringify({
           prompt,
           platforms,
-          tournamentRound: round,
+          platformCount: platforms.length,
         }),
       })
 
@@ -166,7 +200,7 @@ export function useTournament(initialPrompt = "") {
     } catch {
       setState((prev) => {
         const errorResults: Record<string, AICardResult> = {}
-        const ps = prev.currentRound === 1 ? ALL_PLATFORM_IDS : prev.voteState.survivors
+        const ps = isElimination ? ALL_PLATFORM_IDS : prev.voteState.survivors
         for (const p of ps) {
           errorResults[p] = {
             platform: p,
@@ -182,76 +216,156 @@ export function useTournament(initialPrompt = "") {
       })
     }
 
-    setState((prev) => {
-      const voteStage: TournamentStage =
-        prev.currentRound === 1
-          ? "round1_vote"
-          : prev.currentRound === 2
-            ? "round2_vote"
-            : "round3_vote"
-      return { ...prev, isLoading: false, stage: voteStage }
-    })
+    // Cache results for deep mode reuse and transition to vote
+    setState((prev) => ({
+      ...prev,
+      isLoading: false,
+      phase: "round_vote",
+      categoryResults: { ...prev.categoryResults, [catId]: prev.results },
+    }))
   }, [])
 
   // ─── Voting ──────────────────────────────────────────────────────
 
-  /** Round 1: user picks top 3 in order. #1 gets a vote. All 3 advance. */
-  const handleRound1Vote = useCallback((picks: string[]) => {
+  /**
+   * Elimination vote: user picks top 3 in order. #1 gets a vote. All 3 advance.
+   */
+  const handleEliminationVote = useCallback((picks: string[]) => {
     setState((prev) => {
+      const { mode, currentCategoryIndex, selectedCategories } = prev
+      const catId = selectedCategories[currentCategoryIndex]?.id ?? ""
       const newVotes = { ...prev.voteState.votes }
       // #1 pick gets 1 vote
       newVotes[picks[0]] = (newVotes[picks[0]] ?? 0) + 1
 
+      const newCategoryPicks = { ...prev.voteState.categoryPicks }
+      newCategoryPicks[catId] = [...(newCategoryPicks[catId] ?? []), picks]
+
+      const newVoteState: VoteState = {
+        ...prev.voteState,
+        votes: newVotes,
+        survivors: picks,
+        categoryPicks: newCategoryPicks,
+      }
+
+      // Determine next phase
+      if (mode === "fast") {
+        // Fast mode: after elimination (cat 0), move to cat 1 prompt
+        if (currentCategoryIndex < selectedCategories.length - 1) {
+          return {
+            ...prev,
+            voteState: newVoteState,
+            currentCategoryIndex: currentCategoryIndex + 1,
+            currentSubRound: 0,
+            phase: "round_transition" as TournamentPhase,
+          }
+        }
+        // Only one category? Check winner
+        const { winner, needsTiebreaker } = checkForWinner(newVotes, mode, selectedCategories.length)
+        return {
+          ...prev,
+          voteState: newVoteState,
+          phase: needsTiebreaker ? "tiebreaker" : "winner",
+          winner,
+        }
+      }
+
+      // Deep mode: after elimination (sub-round 0), show same results for sub-round 1
       return {
         ...prev,
-        voteState: {
-          ...prev.voteState,
-          votes: newVotes,
-          survivors: picks,
-          round1Picks: picks,
-        },
-        stage: "round2_prompt",
-        currentRound: 2 as RoundNumber,
+        voteState: newVoteState,
+        currentSubRound: 1,
+        phase: "round_prompt" as TournamentPhase,
       }
     })
   }, [])
 
-  /** Rounds 2-3: user picks 1 favorite, gets 1 vote. */
-  const handleRoundVote = useCallback((pick: string) => {
+  /**
+   * Single-pick vote: user picks 1 favorite, gets 1 vote.
+   * Used in fast mode (cats 2-N) and deep mode (sub-rounds 1-2).
+   */
+  const handleSingleVote = useCallback((pick: string) => {
     setState((prev) => {
+      const { mode, currentCategoryIndex, currentSubRound, selectedCategories } = prev
+      const catId = selectedCategories[currentCategoryIndex]?.id ?? ""
       const newVotes = { ...prev.voteState.votes }
       newVotes[pick] = (newVotes[pick] ?? 0) + 1
 
-      const isRound2 = prev.currentRound === 2
-      const newVoteState = {
+      const newCategoryPicks = { ...prev.voteState.categoryPicks }
+      newCategoryPicks[catId] = [...(newCategoryPicks[catId] ?? []), [pick]]
+
+      // Track category winner (platform with most picks in this category)
+      const newCategoryWinners = { ...prev.voteState.categoryWinners }
+
+      const newVoteState: VoteState = {
         ...prev.voteState,
         votes: newVotes,
-        ...(isRound2 ? { round2Pick: pick } : { round3Pick: pick }),
+        categoryPicks: newCategoryPicks,
+        categoryWinners: newCategoryWinners,
       }
 
-      if (isRound2) {
-        // Move to round 3
+      const lastVote = isLastVote(mode, currentCategoryIndex, currentSubRound, selectedCategories.length)
+
+      if (lastVote) {
+        // Compute category winner for last category
+        newCategoryWinners[catId] = computeCategoryWinner(newCategoryPicks[catId] ?? [], newVotes, prev.voteState.survivors)
+        newVoteState.categoryWinners = newCategoryWinners
+
+        const { winner, needsTiebreaker } = checkForWinner(newVotes, mode, selectedCategories.length)
         return {
           ...prev,
           voteState: newVoteState,
-          stage: "round3_prompt" as TournamentStage,
-          currentRound: 3 as RoundNumber,
+          phase: needsTiebreaker ? "tiebreaker" : "winner",
+          winner,
         }
       }
 
-      // After round 3, check for winner
-      const { winner, needsTiebreaker } = checkForWinner(newVotes)
+      if (mode === "fast") {
+        // Fast mode: move to next category
+        // Compute category winner for current category
+        newCategoryWinners[catId] = pick
+        newVoteState.categoryWinners = newCategoryWinners
+
+        return {
+          ...prev,
+          voteState: newVoteState,
+          currentCategoryIndex: currentCategoryIndex + 1,
+          currentSubRound: 0,
+          phase: "round_transition" as TournamentPhase,
+        }
+      }
+
+      // Deep mode: advance sub-round within category
+      if (currentSubRound < 2) {
+        return {
+          ...prev,
+          voteState: newVoteState,
+          currentSubRound: currentSubRound + 1,
+          phase: "round_prompt" as TournamentPhase,
+        }
+      }
+
+      // Deep mode: last sub-round of this category, move to next category
+      newCategoryWinners[catId] = computeCategoryWinner(newCategoryPicks[catId] ?? [], newVotes, prev.voteState.survivors)
+      newVoteState.categoryWinners = newCategoryWinners
 
       return {
         ...prev,
         voteState: newVoteState,
-        stage: needsTiebreaker ? "tiebreaker" : "winner",
-        winner: winner,
+        currentCategoryIndex: currentCategoryIndex + 1,
+        currentSubRound: 0,
+        phase: "round_transition" as TournamentPhase,
       }
     })
   }, [])
 
-  // ─── Tiebreaker ──────────────────────────────────────────────────
+  // ─── Transition ─────────────────────────────────────────────────
+
+  const handleTransitionComplete = useCallback(() => {
+    setState((prev) => ({ ...prev, phase: "round_prompt" }))
+  }, [])
+
+  // ─── Tiebreaker ─────────────────────────────────────────────────
 
   const handleTiebreakerAnswer = useCallback((questionId: string, answer: "a" | "b") => {
     setState((prev) => ({
@@ -263,48 +377,86 @@ export function useTournament(initialPrompt = "") {
   const handleTiebreakerComplete = useCallback(() => {
     setState((prev) => {
       const winner = resolveTiebreaker(prev.voteState.votes, prev.tiebreakerAnswers)
-      return { ...prev, winner, stage: "winner" }
+      return { ...prev, winner, phase: "winner" }
     })
   }, [])
 
-  // ─── Navigation Helpers ──────────────────────────────────────────
+  // ─── Navigation Helpers ─────────────────────────────────────────
 
   const handleBackToGate = useCallback(() => {
-    setState((prev) => ({ ...prev, stage: "gate" }))
+    setState((prev) => ({ ...prev, phase: "gate" }))
   }, [])
 
   const handleRestart = useCallback(() => {
-    setState({
-      stage: "gate",
-      currentRound: 1,
-      voteState: {
-        votes: {},
-        survivors: [...ALL_PLATFORM_IDS],
-        round1Picks: [],
-        round2Pick: null,
-        round3Pick: null,
-      },
-      results: {},
-      isLoading: false,
-      rateLimited: false,
-      useCaseTag: undefined,
-      suggestedPrompt: "",
-      winner: null,
-      tiebreakerAnswers: {},
-      roundPrompts: {},
-    })
+    setState({ ...INITIAL_STATE })
   }, [])
+
+  // ─── Derived helpers ────────────────────────────────────────────
+
+  const getCurrentCategory = (): CategoryConfig | null => {
+    return state.selectedCategories[state.currentCategoryIndex] ?? null
+  }
+
+  const getCurrentRoundConfig = () => {
+    const cat = getCurrentCategory()
+    if (!cat) return null
+    return categoryToRoundConfig(cat, state.currentCategoryIndex)
+  }
+
+  const isElimination = isEliminationSubRound(
+    state.mode,
+    state.currentCategoryIndex,
+    state.currentSubRound
+  )
+
+  const currentPlatforms = getPlatformsForRound(
+    state.mode,
+    state.currentCategoryIndex,
+    state.currentSubRound,
+    state.voteState.survivors
+  )
 
   return {
     state,
+    getCurrentCategory,
+    getCurrentRoundConfig,
+    isElimination,
+    currentPlatforms,
     handlePathSelect,
-    handleOnboardingComplete,
+    handleCategorySelect,
     handleCompare,
-    handleRound1Vote,
-    handleRoundVote,
+    handleEliminationVote,
+    handleSingleVote,
+    handleTransitionComplete,
     handleTiebreakerAnswer,
     handleTiebreakerComplete,
     handleBackToGate,
     handleRestart,
   }
+}
+
+// ─── Internal Helpers ──────────────────────────────────────────────
+
+function computeCategoryWinner(
+  picks: string[][],
+  votes: Record<string, number>,
+  survivors: string[]
+): string {
+  // Count how many times each platform was picked in this category
+  const catVotes: Record<string, number> = {}
+  for (const pickSet of picks) {
+    for (const p of pickSet) {
+      catVotes[p] = (catVotes[p] ?? 0) + 1
+    }
+  }
+
+  let best = survivors[0] ?? ""
+  let bestScore = -1
+  for (const [platform, score] of Object.entries(catVotes)) {
+    if (score > bestScore) {
+      bestScore = score
+      best = platform
+    }
+  }
+  return best
 }

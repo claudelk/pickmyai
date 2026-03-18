@@ -1,46 +1,28 @@
+import type { CategoryConfig, EvaluationCriterion } from "./categories"
+
 // ─── Tournament Types ───────────────────────────────────────────────
 
-export type TournamentStage =
+export type TournamentPhase =
   | "gate"
-  | "onboarding"
-  | "round1_prompt"
-  | "round1_results"
-  | "round1_vote"
-  | "round2_prompt"
-  | "round2_results"
-  | "round2_vote"
-  | "round3_prompt"
-  | "round3_results"
-  | "round3_vote"
+  | "category_select"
+  | "round_prompt"
+  | "round_results"
+  | "round_vote"
+  | "round_transition"
   | "tiebreaker"
   | "winner"
 
-export type RoundNumber = 1 | 2 | 3
-
-export interface RoundConfig {
-  round: RoundNumber
-  category: string
-  defaultPrompt: string
-  hint: string
-  criteria: EvaluationCriterion[]
-}
-
-export interface EvaluationCriterion {
-  label: string
-  description: string
-}
+export type TournamentMode = "fast" | "deep"
 
 export interface VoteState {
-  /** platform id → total vote points */
+  /** platform id → cumulative votes */
   votes: Record<string, number>
-  /** platforms that survived each round */
+  /** current 3 survivors (set after first elimination) */
   survivors: string[]
-  /** ordered picks from round 1 (index 0 = #1 pick) */
-  round1Picks: string[]
-  /** single pick from round 2 */
-  round2Pick: string | null
-  /** single pick from round 3 */
-  round3Pick: string | null
+  /** categoryId → picked platform IDs per sub-round */
+  categoryPicks: Record<string, string[][]>
+  /** categoryId → platform that won most votes in that category */
+  categoryWinners: Record<string, string>
 }
 
 export interface TiebreakerQuestion {
@@ -50,49 +32,8 @@ export interface TiebreakerQuestion {
   optionB: { label: string; platforms: string[] }
 }
 
-// ─── Round Configs ──────────────────────────────────────────────────
-
-export const ROUND_CONFIGS: RoundConfig[] = [
-  {
-    round: 1,
-    category: "Rewriting & Editing",
-    defaultPrompt:
-      "Rewrite this paragraph to sound more professional while keeping the same meaning: 'Hey team, just wanted to flag that the project is kinda behind schedule. We probably need to figure out what went wrong and get things back on track ASAP. Let me know what you think.'",
-    hint: "This prompt is designed to test rewriting and editing skills. Feel free to use it or write your own.",
-    criteria: [
-      { label: "Tone", description: "Does it sound professional without being robotic?" },
-      { label: "Clarity", description: "Is the message easy to understand?" },
-      { label: "Structure", description: "Is it well-organized and logical?" },
-      { label: "Conciseness", description: "Does it say more with fewer words?" },
-    ],
-  },
-  {
-    round: 2,
-    category: "Analysis & Reasoning",
-    defaultPrompt:
-      "A small startup (8 people) is debating whether to stay fully remote or move to a hybrid office model. The CEO wants in-person collaboration, but 3 key engineers prefer remote. Lay out the strongest arguments for each side and suggest a compromise.",
-    hint: "This prompt is designed to test analysis and reasoning. Feel free to use it or write your own.",
-    criteria: [
-      { label: "Depth", description: "Does it go beyond surface-level arguments?" },
-      { label: "Logical flow", description: "Are the arguments well-structured?" },
-      { label: "Completeness", description: "Does it cover both sides fairly?" },
-      { label: "Nuance", description: "Does it acknowledge trade-offs and gray areas?" },
-    ],
-  },
-  {
-    round: 3,
-    category: "Creative Writing",
-    defaultPrompt:
-      "Write the opening paragraph of a short story about someone who discovers that every book in their local library has had its last page removed.",
-    hint: "This prompt is designed to test creative writing. Feel free to use it or write your own.",
-    criteria: [
-      { label: "Creativity", description: "Is the approach original and surprising?" },
-      { label: "Voice", description: "Does it have a distinct style or personality?" },
-      { label: "Engagement", description: "Does it make you want to keep reading?" },
-      { label: "Originality", description: "Does it avoid clichés and predictable setups?" },
-    ],
-  },
-]
+// Re-export for backward compatibility
+export type { EvaluationCriterion } from "./categories"
 
 // ─── Tiebreaker Questions ───────────────────────────────────────────
 
@@ -129,7 +70,6 @@ export function resolveTiebreaker(
   votes: Record<string, number>,
   tiebreakerAnswers: Record<string, "a" | "b">
 ): string {
-  // Start with vote scores
   const scores: Record<string, number> = { ...votes }
 
   for (const q of TIEBREAKER_QUESTIONS) {
@@ -142,7 +82,6 @@ export function resolveTiebreaker(
     }
   }
 
-  // Return platform with highest combined score
   let best = ""
   let bestScore = -1
   for (const [platform, score] of Object.entries(scores)) {
@@ -159,15 +98,67 @@ export function resolveTiebreaker(
 
 export const ALL_PLATFORM_IDS = ["chatgpt", "claude", "gemini", "mistral", "grok", "meta"]
 
-export function getRoundConfig(round: RoundNumber): RoundConfig {
-  return ROUND_CONFIGS[round - 1]
+/**
+ * Check if the current sub-round is an elimination round (6 AIs → pick 3).
+ * - Fast mode: only the first category (index 0) is elimination
+ * - Deep mode: sub-round 0 of every category is elimination
+ */
+export function isEliminationSubRound(
+  mode: TournamentMode,
+  currentCategoryIndex: number,
+  currentSubRound: number
+): boolean {
+  if (mode === "fast") return currentCategoryIndex === 0
+  return currentSubRound === 0
 }
 
 /**
- * Check if there's a clear winner (2+ votes) among survivors,
- * or if a tiebreaker is needed.
+ * Get the platforms that should compete in the current round.
  */
-export function checkForWinner(votes: Record<string, number>): {
+export function getPlatformsForRound(
+  mode: TournamentMode,
+  currentCategoryIndex: number,
+  currentSubRound: number,
+  survivors: string[]
+): string[] {
+  if (isEliminationSubRound(mode, currentCategoryIndex, currentSubRound)) {
+    return [...ALL_PLATFORM_IDS]
+  }
+  return [...survivors]
+}
+
+/**
+ * Check if this is the last vote of the tournament.
+ */
+export function isLastVote(
+  mode: TournamentMode,
+  currentCategoryIndex: number,
+  currentSubRound: number,
+  totalCategories: number
+): boolean {
+  const isLastCategory = currentCategoryIndex === totalCategories - 1
+  if (mode === "fast") return isLastCategory
+  return isLastCategory && currentSubRound === 2
+}
+
+/**
+ * Get total number of voting rounds for winner detection thresholds.
+ */
+export function getTotalVotingRounds(mode: TournamentMode, totalCategories: number): number {
+  if (mode === "fast") return totalCategories
+  return totalCategories * 3
+}
+
+/**
+ * Check if there's a clear winner or if a tiebreaker is needed.
+ * - Fast track: needs > runner-up AND >= 2 votes
+ * - Deep dive: needs > runner-up AND >= ceil(totalSubRounds / 2) votes
+ */
+export function checkForWinner(
+  votes: Record<string, number>,
+  mode: TournamentMode,
+  totalCategories: number
+): {
   winner: string | null
   needsTiebreaker: boolean
 } {
@@ -177,9 +168,38 @@ export function checkForWinner(votes: Record<string, number>): {
   const [topPlatform, topScore] = entries[0]
   const secondScore = entries[1]?.[1] ?? 0
 
-  if (topScore >= 2 && topScore > secondScore) {
+  const totalRounds = getTotalVotingRounds(mode, totalCategories)
+  const minVotes = mode === "fast" ? 2 : Math.ceil(totalRounds / 2)
+
+  if (topScore >= minVotes && topScore > secondScore) {
     return { winner: topPlatform, needsTiebreaker: false }
   }
 
   return { winner: null, needsTiebreaker: true }
+}
+
+// ─── Legacy compatibility ───────────────────────────────────────────
+// Keep RoundConfig shape compatible for PromptInput
+export interface RoundConfig {
+  round: number
+  category: string
+  defaultPrompt: string
+  hint: string
+  criteria: EvaluationCriterion[]
+}
+
+/**
+ * Convert a CategoryConfig + indices into a RoundConfig for PromptInput.
+ */
+export function categoryToRoundConfig(
+  cat: CategoryConfig,
+  categoryIndex: number,
+): RoundConfig {
+  return {
+    round: categoryIndex + 1,
+    category: cat.name,
+    defaultPrompt: cat.defaultPrompt,
+    hint: cat.hint,
+    criteria: cat.criteria,
+  }
 }

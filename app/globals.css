@@ -34,3 +34,19 @@ body {
   background: radial-gradient(ellipse 80% 60% at 50% 30%, var(--color-warm-100) 0%, var(--color-warm-50) 50%, #ffffff 100%);
   background-attachment: fixed;
 }
+
+/* When category background is active, make navbar transparent */
+body.has-category-bg nav {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border-bottom-color: transparent !important;
+}
+
+body.has-category-bg nav a,
+body.has-category-bg nav button {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.has-category-bg nav a[class*="underline"] {
+  color: #ffffff !important;
+}

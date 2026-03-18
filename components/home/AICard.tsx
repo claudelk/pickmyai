@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react"
 import { ExternalLink } from "lucide-react"
 import { RecommendationBadge } from "./RecommendationBadge"
+import { PlatformLogo } from "./PlatformLogo"
 import type { Platform } from "@/lib/constants"
 
 export interface AICardResult {
@@ -91,11 +92,8 @@ export function AICard({
       {isRecommended && !isLoading && !isError && !selectable && <RecommendationBadge />}
 
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div
-          className="w-3 h-3 rounded-full flex-shrink-0"
-          style={{ backgroundColor: platform.color }}
-        />
+      <div className="flex items-center gap-2.5 mb-3">
+        <PlatformLogo platformId={platform.id} size={22} className="flex-shrink-0" />
         <h3 className="font-semibold text-sm text-warm-800">{platform.displayName}</h3>
         <span className="text-xs text-warm-400">{platform.company}</span>
       </div>

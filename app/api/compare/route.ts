@@ -117,12 +117,12 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Invalid request body" }, { status: 400 })
   }
 
-  // Rate limiting — only count on round 1 (or non-tournament requests)
-  const tournamentRound = typeof bodyRaw.tournamentRound === "number" ? bodyRaw.tournamentRound : 1
+  // Rate limiting — only count on elimination rounds (6 AIs)
+  const platformCount = typeof bodyRaw.platformCount === "number" ? bodyRaw.platformCount : 6
   const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "127.0.0.1"
   let remaining = 3
 
-  if (tournamentRound === 1) {
+  if (platformCount === 6) {
     const rl = await checkRateLimit(ip)
     remaining = rl.remaining
 
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate parsed body
-  const body = bodyRaw as { prompt?: string; useCaseTag?: string; platforms?: string[]; tournamentRound?: number }
+  const body = bodyRaw as { prompt?: string; useCaseTag?: string; platforms?: string[]; platformCount?: number }
 
   const prompt = body.prompt?.trim()
   if (!prompt) {

@@ -1,49 +1,61 @@
 # Tournament Comparison (P0) — IMPLEMENTED
 
 ## Overview
-3-round tournament bracket where users actively judge AI responses across different skill categories, leading to a personalized recommendation.
+Category-based tournament where users choose 2–5 skill categories, then AIs compete in each. Two tournament modes exist based on user experience: **Fast Track** (1 round per category) and **Deep Dive** (3 sub-rounds per category).
 
 ## Status
-**Implemented** — All phases complete. Full tournament flow from gate to winner card.
+**Implemented** — Full tournament flow: gate → category select → dynamic rounds → winner.
+
+## Categories (at launch)
+
+| ID | Name | Status |
+|---|---|---|
+| `rewriting` | Rewriting & Editing | available |
+| `analysis` | Analysis & Reasoning | available |
+| `creative` | Creative Writing | available |
+| `coding` | Coding | available |
+| `image_gen` | Image Generation | coming_soon |
+| `video_gen` | Video Generation | coming_soon |
+| `music_gen` | Music Generation | coming_soon |
+
+## Tournament Modes
+
+### Fast Track ("I know AI")
+- 1 round per category
+- Cat 1: 6 AIs, pick top 3 (elimination). Cats 2-N: 3 survivors, pick 1 favorite.
+- Max votes per platform: N (number of categories)
+
+### Deep Dive ("I am new to AI")
+- 3 sub-rounds per category (same prompt, same responses, 3 voting passes)
+- Sub-round 1: 6 AIs, pick top 3 (elimination). Sub-rounds 2-3: 3 survivors, pick 1 each.
+- Max votes per platform: 3 × N
+- No new API calls for sub-rounds 2-3 (results are cached)
 
 ## Flow (State Machine)
 ```
-gate → onboarding → round1_prompt → round1_results → round1_vote →
-  round2_prompt → round2_results → round2_vote →
-    round3_prompt → round3_results → round3_vote →
-      winner | tiebreaker → winner
+gate → category_select →
+  round_prompt → round_results → round_vote →
+  round_transition →
+  ... (repeat per category/sub-round) →
+  winner | tiebreaker → winner
 ```
 
-Managed by `lib/useTournament.ts` custom hook. Stage transitions are automatic after API responses complete and user votes.
+Phases: `gate`, `onboarding`, `category_select`, `round_prompt`, `round_results`, `round_vote`, `round_transition`, `tiebreaker`, `winner`
 
-## Rounds
-
-| Round | Category | Platforms | User Action |
-|-------|----------|-----------|-------------|
-| 1 | Rewriting/Editing | All 6 | Pick top 3 (ordered: #1 = vote, #2/#3 advance) |
-| 2 | Analysis/Reasoning | Top 3 survivors | Pick 1 favorite (= 1 vote) |
-| 3 | Creative Writing | Same top 3 | Pick 1 favorite (= 1 vote) |
-
-## Default Prompts
-Each round has a benchmark-quality default prompt with hint: *"This prompt is designed to test [category]. Feel free to use it or write your own."*
-
-- **Rewriting**: Rewrite an informal paragraph to sound professional
-- **Analysis**: Analyze remote vs hybrid work tradeoffs for a startup
-- **Creative**: Write a story opening about missing last pages in library books
+## Winner Detection
+- **Fast track**: needs > runner-up AND ≥ 2 votes
+- **Deep dive**: needs > runner-up AND ≥ ceil(totalSubRounds / 2) votes
+- Tie → tiebreaker (same 4 preference questions, +0.5 each)
 
 ## Assessment Framework
-Each round displays 4 evaluation criteria above results (via `AssessmentCriteria.tsx`):
-- Round 1: Tone, Clarity, Structure, Conciseness
-- Round 2: Depth, Logical Flow, Completeness, Nuance
-- Round 3: Creativity, Voice, Engagement, Originality
-
-## Vote System
-- Max votes per platform: 3 (one per round)
-- Clear winner: platform with most votes (2+ out of 3, higher than second place)
-- Tie: goes to tiebreaker flow
+Each category displays 4 evaluation criteria (via `AssessmentCriteria.tsx`):
+- Rewriting: Tone, Clarity, Structure, Conciseness
+- Analysis: Depth, Logical Flow, Completeness, Nuance
+- Creative: Creativity, Voice, Engagement, Originality
+- Coding: Correctness, Efficiency, Readability, Explanation
 
 ## Tiebreaker
-4 preference questions mapped to platform strengths:
+4 preference questions mapped to platform strengths (unchanged):
 1. Speed vs thoroughness
 2. Formal vs casual tone
 3. Privacy importance
@@ -55,25 +67,28 @@ Each answer adds +0.5 to matching platforms. Combined with vote scores, highest 
 
 | Component | Purpose |
 |-----------|---------|
-| `TournamentProgress.tsx` | "Round 1 of 3 — Rewriting" progress bar |
-| `AssessmentCriteria.tsx` | 4 criteria cards shown above results |
+| `CategorySelector.tsx` | Tile grid for picking 2-5 categories, "Not sure?" preset, coming soon tiles |
+| `TournamentProgress.tsx` | Dynamic N categories with names + sub-round indicator (deep mode) |
+| `AssessmentCriteria.tsx` | 4 criteria cards shown above results (per category) |
 | `VoteOverlay.tsx` | Standalone vote picker (available but voting is integrated into cards) |
 | `TiebreakerFlow.tsx` | 4 preference questions when votes are tied |
-| `WinnerCard.tsx` | Final recommendation with vote breakdown + "Try it free" CTA |
+| `WinnerCard.tsx` | Winner + per-category breakdown + dynamic vote dots + "Try it free" CTA |
+| `RoundTransition.tsx` | Brief animation between categories with progress dots |
 | `NormalModeDisclaimer.tsx` | "Comparing standard chat mode" info banner |
 
 ## Data Layer
 
 | File | Purpose |
 |------|---------|
-| `lib/tournament.ts` | Types, round configs, tiebreaker questions, resolver, helpers |
-| `lib/useTournament.ts` | Custom hook with all tournament state & transitions |
-
-## Normal Mode Disclaimer
-Clear statement: "Comparing standard chat mode — not deep research, deep thinking, code interpreter, or image/video generation."
+| `lib/categories.ts` | `CategoryConfig` interface, `CATEGORIES` array (7 categories), helpers |
+| `lib/tournament.ts` | Phases, modes, vote state, tiebreaker, scoring helpers |
+| `lib/useTournament.ts` | Custom hook: dynamic state machine with mode-aware transitions |
 
 ## Rate Limiting
-Rate limit only counts on Round 1 (when all 6 AIs are queried). Rounds 2-3 (3 AIs each) do not consume rate limit. 3 tournament runs per 24h per IP.
+- Only elimination rounds (6 AIs) count against rate limit
+- 3 survivors rounds are free
+- Deep dive: cached results for sub-rounds 2-3 (no new API calls)
+- 3 tournament runs per 24h per IP
 
-## API Changes
-`POST /api/compare` now accepts optional `platforms` array and `tournamentRound` param. Rate limiting is bypassed for rounds 2-3.
+## API
+`POST /api/compare` accepts `platforms` array and `platformCount` param. Rate limiting checks `platformCount === 6`.

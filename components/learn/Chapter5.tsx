@@ -17,9 +17,9 @@ export function Chapter5() {
 
       {/* Personalization section */}
       <div className="rounded-xl border border-warm-200 bg-white p-6 space-y-5">
-        <h3 className="text-lg font-semibold text-warm-800">AI is generic at first — but personalizable</h3>
+        <h3 className="text-lg font-semibold text-warm-800">AI is generic at first, but personalizable</h3>
         <p className="text-sm text-warm-500 leading-relaxed">
-          When you first open ChatGPT, Claude, or any other AI, it responds in a default style — helpful but impersonal. That is the baseline, and it is what our comparison tool tests. But most platforms let you customize:
+          When you first open ChatGPT, Claude, or any other AI, it responds in a default style: helpful but impersonal. That is the baseline, and it is what our comparison tool tests. But most platforms let you customize:
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -50,7 +50,7 @@ export function Chapter5() {
         </div>
 
         <p className="text-sm text-warm-500 leading-relaxed">
-          The AI you pick today will feel different in a month — not because it changed, but because you shaped it. Start with the one that matches your baseline needs, then make it yours.
+          The AI you pick today will feel different in a month, not because it changed, but because you shaped it. Start with the one that matches your baseline needs, then make it yours.
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export function Chapter5() {
       <div className="rounded-xl border border-accent-100 bg-accent-50/50 p-6 space-y-3">
         <h3 className="text-lg font-semibold text-warm-800">What our comparison tests</h3>
         <p className="text-sm text-warm-500 leading-relaxed">
-          Our tournament compares <span className="font-medium text-warm-700">standard chat mode</span> — the free, default experience you get when you sign up for any platform. This means:
+          Our tournament compares <span className="font-medium text-warm-700">standard chat mode</span>: the free, default experience you get when you sign up for any platform. This means:
         </p>
         <ul className="space-y-2 text-sm text-warm-500">
           <li className="flex items-start gap-2">
@@ -79,7 +79,7 @@ export function Chapter5() {
           </li>
         </ul>
         <p className="text-sm text-warm-500 leading-relaxed">
-          These advanced features vary widely by platform and pricing tier. Our goal is to help you find the best <span className="italic">starting point</span> — the AI whose default personality and writing style clicks with you.
+          These advanced features vary widely by platform and pricing tier. Our goal is to help you find the best <span className="italic">starting point</span>, the AI whose default personality and writing style clicks with you.
         </p>
       </div>
 

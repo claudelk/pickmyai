@@ -10,7 +10,6 @@ import { PLATFORMS } from "@/lib/constants"
 interface ResultsGridProps {
   results: Record<string, AICardResult>
   recommendedPlatform?: string
-  onNewPrompt?: (prompt: string) => void
   isLoading: boolean
   /** When provided, only show these platforms (tournament rounds 2-3) */
   platforms?: string[]
@@ -42,21 +41,23 @@ export function ResultsGrid({
     : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-6 py-4">
-      {/* Developer mode toggle */}
-      <div className="flex justify-end mb-4">
-        <DeveloperModeToggle enabled={devMode} onToggle={() => setDevMode(!devMode)} />
-      </div>
+    <div className="w-full max-w-6xl mx-auto px-6 py-2">
+      {/* Dev mode panel — only show when active */}
+      {devMode && (
+        <div className="flex justify-end mb-2">
+          <DeveloperModeToggle enabled={devMode} onToggle={() => setDevMode(false)} />
+        </div>
+      )}
 
-      {/* Floating gear button */}
+      {/* Floating gear button — bottom right, always available */}
       {!devMode && (
         <button
           onClick={() => setDevMode(true)}
-          className="fixed bottom-20 sm:bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-white border border-warm-200 flex items-center justify-center hover:bg-warm-50 hover:border-warm-300 transition-colors duration-200 focus:ring-2 focus:ring-accent-400"
+          className="fixed bottom-20 sm:bottom-6 right-6 z-40 w-11 h-11 sm:w-9 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-warm-200 flex items-center justify-center hover:bg-warm-50 hover:border-warm-300 transition-colors duration-200 focus:ring-2 focus:ring-accent-400"
           aria-label="Enable developer mode"
           title="Developer mode"
         >
-          <Settings size={16} className="text-warm-400" />
+          <Settings size={14} className="text-warm-400" />
         </button>
       )}
 

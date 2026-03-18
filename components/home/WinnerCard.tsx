@@ -1,21 +1,26 @@
 "use client"
 
-import { ExternalLink, RotateCcw } from "lucide-react"
+import { ExternalLink, RotateCcw, Trophy } from "lucide-react"
 import { PLATFORMS } from "@/lib/constants"
-import type { VoteState } from "@/lib/tournament"
+import { PlatformLogo } from "./PlatformLogo"
+import type { VoteState, TournamentMode } from "@/lib/tournament"
+import { getTotalVotingRounds } from "@/lib/tournament"
+import type { CategoryConfig } from "@/lib/categories"
 
 interface WinnerCardProps {
   winnerId: string
   voteState: VoteState
+  mode: TournamentMode
+  selectedCategories: CategoryConfig[]
   onRestart: () => void
 }
 
-export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) {
+export function WinnerCard({ winnerId, voteState, mode, selectedCategories, onRestart }: WinnerCardProps) {
   const winner = PLATFORMS.find((p) => p.id === winnerId)
   if (!winner) return null
 
-  // Build vote breakdown for all survivors
   const survivors = voteState.survivors.length > 0 ? voteState.survivors : [winnerId]
+  const maxVotes = getTotalVotingRounds(mode, selectedCategories.length)
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-6 py-12">
@@ -26,10 +31,7 @@ export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) 
             Your best match
           </p>
           <div className="flex items-center justify-center gap-3">
-            <div
-              className="w-5 h-5 rounded-full"
-              style={{ backgroundColor: winner.color }}
-            />
+            <PlatformLogo platformId={winner.id} size={32} />
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-warm-800">
               {winner.displayName}
             </h1>
@@ -51,6 +53,35 @@ export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) 
             ))}
           </div>
         </div>
+
+        {/* Per-category breakdown */}
+        {selectedCategories.length > 1 && Object.keys(voteState.categoryWinners).length > 0 && (
+          <div className="rounded-xl border border-warm-200 bg-white p-5 space-y-3">
+            <p className="text-xs font-medium text-warm-400 uppercase tracking-wider">
+              Category winners
+            </p>
+            <div className="space-y-2">
+              {selectedCategories.map((cat) => {
+                const catWinnerId = voteState.categoryWinners[cat.id]
+                const catWinner = PLATFORMS.find((p) => p.id === catWinnerId)
+                if (!catWinner) return null
+
+                return (
+                  <div key={cat.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-warm-50">
+                    <span className="text-sm text-warm-600">{cat.name}</span>
+                    <div className="flex items-center gap-2">
+                      <PlatformLogo platformId={catWinner.id} size={14} />
+                      <span className={`text-sm font-medium ${catWinnerId === winnerId ? "text-accent-600" : "text-warm-700"}`}>
+                        {catWinner.displayName}
+                      </span>
+                      {catWinnerId === winnerId && <Trophy size={12} className="text-accent-500" />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Vote breakdown */}
         <div className="rounded-xl border border-warm-200 bg-white p-5 space-y-3">
@@ -74,16 +105,13 @@ export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) 
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: platform.color }}
-                      />
+                      <PlatformLogo platformId={platform.id} size={16} />
                       <span className={`text-sm ${isWinner ? "font-medium text-warm-800" : "text-warm-500"}`}>
                         {platform.displayName}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      {[...Array(3)].map((_, i) => (
+                      {[...Array(maxVotes)].map((_, i) => (
                         <div
                           key={i}
                           className={`w-2 h-2 rounded-full ${
@@ -91,7 +119,7 @@ export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) 
                           }`}
                         />
                       ))}
-                      <span className="text-xs text-warm-400 ml-1 tabular-nums">{votes}/3</span>
+                      <span className="text-xs text-warm-400 ml-1 tabular-nums">{votes}/{maxVotes}</span>
                     </div>
                   </div>
                 )
@@ -114,11 +142,12 @@ export function WinnerCard({ winnerId, voteState, onRestart }: WinnerCardProps) 
           <div>
             <button
               onClick={onRestart}
-              className="inline-flex items-center gap-1.5 text-sm text-warm-400 hover:text-warm-600 transition-colors duration-200"
+              className="inline-flex items-center gap-1.5 text-sm text-warm-400 hover:text-warm-600 transition-colors duration-200 min-h-[44px]"
             >
               <RotateCcw size={14} />
               Start a new tournament
             </button>
+
           </div>
         </div>
       </div>

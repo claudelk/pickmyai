@@ -8,7 +8,7 @@ export function NormalModeDisclaimer() {
       <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-warm-50 border border-warm-150">
         <Info size={14} className="text-warm-400 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-warm-400 leading-relaxed">
-          Comparing standard chat mode — not deep research, deep thinking, code interpreter, or image/video generation.
+          Comparing standard chat mode, not deep research, deep thinking, code interpreter, or image/video generation.
         </p>
       </div>
     </div>

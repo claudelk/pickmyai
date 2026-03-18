@@ -2,10 +2,8 @@
 
 import { useState } from "react"
 import { PLATFORMS } from "@/lib/constants"
-import type { RoundNumber } from "@/lib/tournament"
-
 interface VoteOverlayProps {
-  round: RoundNumber
+  round: number
   platforms: string[]
   onVoteRound1: (picks: string[]) => void
   onVoteSingle: (pick: string) => void
